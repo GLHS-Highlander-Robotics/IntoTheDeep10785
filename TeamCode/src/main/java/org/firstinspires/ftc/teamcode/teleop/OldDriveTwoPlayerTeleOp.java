@@ -121,7 +121,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             armMotorSteps = MIN_HEIGHT;
             mode = DEFAULT;
         }else
-        if (gamepad2.dpad_left){
+        if (gamepad2.right_trigger > DEAD_ZONE_P2){
             slide.place = true;
             rotMotorSteps = 500 + limit;
             armMotorSteps=MIN_HEIGHT;
@@ -257,17 +257,17 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         }
         // rotation trigger
         if (!detectedRotTrig) {
-            if (gamepad2.right_trigger > 0.5 && rotTrigged) {
+            if (gamepad2.dpad_left && rotTrigged) {
                 slide.place = true;
                 detectedRotTrig = true;
                 rotTrigged = false;
-            } else if (gamepad2.right_trigger > 0.5 && !rotTrigged) {
+            } else if (gamepad2.dpad_left && !rotTrigged) {
                 slide.place = false;
                 detectedRotTrig = true;
                 rotTrigged = true;
             }
         } else {
-            if (gamepad2.right_trigger < 0.5)
+            if (gamepad2.dpad_left < 0.5)
                 detectedRotTrig = false;
         }
 
