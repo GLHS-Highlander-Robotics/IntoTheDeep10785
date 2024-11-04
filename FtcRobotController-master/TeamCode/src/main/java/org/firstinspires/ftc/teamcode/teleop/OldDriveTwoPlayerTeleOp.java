@@ -29,6 +29,7 @@ import org.firstinspires.ftc.teamcode.subsystem.slide.LinearSlide;
 public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
     public static double HIGH_POWER = 1.0;
     public static double LOW_POWER = 0.35;
+    public static double POWER_STEP = 0.02;
     public static double DEAD_ZONE_P1 = 0.05;
     public static double DEAD_ZONE_P2 = 0.05;
 
@@ -58,10 +59,22 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
     boolean detectedRotTrig = false;
     boolean rotTrigged = false;
     int limit = 0;
+
+    public static int ROT_MIN = 0;
+    public static int ROT_MAX_EXTEND = 280;
+    public static int ROT_MAX;
+
+
+    public static int ARM_MIN;
+    public static int ARM_MAX_DOWN = 2500;
+
+
     public enum armMode {
         EXTENDOFLOOR, EXTENDOBOARD, DEFAULT
     }
     armMode mode = DEFAULT;
+
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -93,6 +106,16 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         }
     }
 
+
+    public int clamp(int value, int min, int max){
+        if(value<=min){
+            value = min;
+        }
+        else if(value>=max){
+            value = max;
+        }
+        return value;
+    }
     public void updateSlideByGamepad() {
         slide.update();
         // Set rotation steps to predefined height with p2 buttons, preset pickup command
@@ -115,11 +138,11 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             slide.place=false;
             mode = DEFAULT;
         } else if (gamepad2.y) {
-            rotMotorSteps = HIGH_ROT + limit;
-            armMotorSteps = MIN_HEIGHT;
+            rotMotorSteps = HIGH_ROT + limit - 195;
+            armMotorSteps = 790;
             mode = DEFAULT;
         }else
-        if (gamepad2.right_trigger > DEAD_ZONE_P2){
+        if (gamepad2.dpad_left){
             slide.place = true;
             rotMotorSteps = 500 + limit;
             armMotorSteps=MIN_HEIGHT;
@@ -255,17 +278,17 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         }
         // rotation trigger
         if (!detectedRotTrig) {
-            if (gamepad2.dpad_left && rotTrigged) {
+            if (gamepad2.right_trigger > DEAD_ZONE_P2 && rotTrigged) {
                 slide.place = true;
                 detectedRotTrig = true;
                 rotTrigged = false;
-            } else if (gamepad2.dpad_left && !rotTrigged) {
+            } else if (gamepad2.right_trigger > DEAD_ZONE_P2 && !rotTrigged) {
                 slide.place = false;
                 detectedRotTrig = true;
                 rotTrigged = true;
             }
         } else {
-            if (gamepad2.dpad_left)
+            if (gamepad2.right_trigger > DEAD_ZONE_P2)
                 detectedRotTrig = false;
         }
 
@@ -303,9 +326,10 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         if (Math.abs(gamepad1.right_stick_x) < DEAD_ZONE_P1) { rotate = 0; }
 
         if (gamepad1.a) {
-            forward = LOW_POWER;
-        } else if (gamepad1.b) {
-            forward = -LOW_POWER;
+          // NOTHING HERE YET
+        }
+        else if (gamepad1.b) {
+           // NOTHING HERE YET
         }
 
          fieldForward = strafe * Math.sin(-botHeading) + forward * Math.cos(-botHeading);
@@ -329,6 +353,10 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             drive.driveBot(forward, strafe, rotate);
         } else {
             drive.driveBot(fieldForward, fieldStrafe, rotate);
+        }
+
+        if(rotMotorSteps<=ROT_MAX_EXTEND){
+            armMotorSteps = clamp(armMotorSteps, 0, ARM_MAX_DOWN);
         }
     }
 
