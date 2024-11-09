@@ -41,6 +41,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.subsystem.slide.LinearSlide;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.opencv.core.Mat;
+
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -120,7 +122,7 @@ public class auto_odo_test extends LinearOpMode {
         telemetry.addData("Status", "Running");
         telemetry.update();
 
-        instruct1();
+        instruct2();
 
     }
 
@@ -148,7 +150,7 @@ public class auto_odo_test extends LinearOpMode {
     }
 
     private void instruct2() {
-        otosDrive(12,0,0,5);
+        otosDrive(0,0,3600,5);
     }
 
     private void instruct3(){
@@ -262,7 +264,7 @@ public class auto_odo_test extends LinearOpMode {
             // Use the speed and turn "gains" to calculate how we want the robot to move.
             drive  = Range.clip(yError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
             strafe = Range.clip(xError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-            turn   = Range.clip(yawError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
+            turn = Range.clip(yawError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
 
             telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             // current x,y swapped due to 90 degree rotation
@@ -310,21 +312,30 @@ public class auto_odo_test extends LinearOpMode {
      */
     void moveRobot(double y, double x, double yaw) {
 
+        // Calculate magnitude, direction, and turn
+        double dir = Math.atan2(y,x);
+        double mag = Math.hypot(y,x);
+        double turn = yaw;
+
+        // Get sin, cos, and max:
+        double sin = Math.sin(dir-(Math.PI/4));
+        double cos = Math.cos(dir-(Math.PI/4));
+        double maxim = Math.max(Math.abs(sin), Math.abs(cos));
+
+
+
         // Calculate wheel powers.
-        double leftFrontPower    =  y + x + yaw;
-        double rightFrontPower   =  y - x - yaw;
-        double leftBackPower     =  y - x + yaw;
-        double rightBackPower    =  y + x - yaw;
+        double leftFrontPower    =  mag*cos/maxim + turn;
+        double rightFrontPower   =  mag*sin/maxim - turn;
+        double leftBackPower     =  mag*sin/maxim + turn;
+        double rightBackPower    =  mag*cos/maxim - turn;
 
         // Normalize wheel powers to be less than 1.0
-        double max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
-        max = Math.max(max, Math.abs(leftBackPower));
-        max = Math.max(max, Math.abs(rightBackPower));
-        if (max > 1.0) {
-            leftFrontPower /= max;
-            rightFrontPower /= max;
-            leftBackPower /= max;
-            rightBackPower /= max;
+        if ((mag+Math.abs(turn)) > 1.0) {
+            leftFrontPower /= mag+turn;
+            rightFrontPower /= mag+turn;
+            leftBackPower /= mag+turn;
+            rightBackPower /= mag+turn;
         }
 
         // Send powers to the wheels.

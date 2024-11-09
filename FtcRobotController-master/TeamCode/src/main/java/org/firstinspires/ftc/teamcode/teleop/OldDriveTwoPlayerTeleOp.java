@@ -69,6 +69,12 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
     public static int ARM_MAX_DOWN = 2500;
 
 
+    // PRESET FOR PICKING UP SPECIMEN OFF WALL:
+    public static int ARM_PICKUP = 0;
+    public static int ROT_PICKUP = 980;
+    public static int SERVOROT_PICKUP = 845;
+
+
     public enum armMode {
         EXTENDOFLOOR, EXTENDOBOARD, DEFAULT
     }
@@ -126,11 +132,12 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             slide.place = false;
             mode = DEFAULT;
         } else if (gamepad2.b) {
-            rotMotorSteps = LOW_ROT + limit;
-            armMotorSteps = LOW_HEIGHT;
-            slide.turnPlaceEx();
-            slide.place=true;
-            mode = DEFAULT;
+             rotMotorSteps = ROT_PICKUP + limit;
+             armMotorSteps = ARM_PICKUP;
+            // slide.turnPlaceEx();
+            // slide.place=true;
+            // mode = DEFAULT;
+            slide.rotServo.setPosition(SERVOROT_PICKUP);
         } else if (gamepad2.x) {
             rotMotorSteps = MEDIUM_ROT+30 + limit;
             armMotorSteps = MIN_HEIGHT;
@@ -373,8 +380,5 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         telemetry.addData("Place position?", slide.place);
         telemetry.addData("Turn Rot:", slide.rotServo.getPosition());
         telemetry.addData("Extendo Mode:", mode);
-
-
-
     }
 }
