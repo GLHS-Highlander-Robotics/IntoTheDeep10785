@@ -28,21 +28,32 @@ public class LinearSlide {
     public static double MAX_POWER_ROT = 1;
 
     //Rot steps
+    //public static int MAX_ROT = 5000;
+    //public static int HIGH_ROT = 5000;
+    //public static int MEDIUM_ROT = 1295;
+    //public static int LOW_ROT = 1060;
+    //public static int MIN_ROT = 1060;
+
     public static int MIN_ROT = 0;
     public static int LOW_ROT = 1060;
     public static int MEDIUM_ROT = 1295;
     public static int HIGH_ROT = 840;
     public static int MAX_ROT = 2106;
+    
+    //Rot constants
     public static int INCREMENT_ROT = 10;
     public static int TICKSPERROT = 2520;
     public static double DEGPERTICK = 90.0/500.0;
+    
     //Grip pos
-    public static double RFLOOR = 0.9075;
+    public static double RFLOOR = 0;
     public static double RPLACE = 0.45;
-    public static double RCLOSE = 0.9;
-    public static double ROPEN = 0.69;
-    public static double LCLOSE = 0.3;
-    public static double LOPEN = 0.55;
+    public static double RWALL = 1;
+
+    public static double RCLOSE = 0;
+    public static double ROPEN = 1;
+    public static double LCLOSE = 0;
+    public static double LOPEN = 1;
     //motors
     public DcMotorEx slideMotor;
     public DcMotorEx rotMotor;
@@ -190,11 +201,11 @@ public class LinearSlide {
             }
         }
 
-        if (!place) {
-            turnFloorEx();
-        } else {
-            turnPlaceEx();
-        }
+//        if (!place) {
+//            turnFloorEx();
+//        } else {
+//            turnPlaceEx();
+//        }
     }
 //Grab functions
     public void ungrabL() {
@@ -234,7 +245,7 @@ public class LinearSlide {
     }
 
     public void turnFloor() {
-        turnRot(rotServo, RFLOOR);
+        turnRot(rotServo, RWALL);
     }
 
     public void turnPlace() {
@@ -260,7 +271,7 @@ public class LinearSlide {
         turnRot(rotServo, RPLACE);
     }
 
-
-
-
+    public void turnServoRot(double position){
+        rotServo.setPosition(position);
+    }
 }

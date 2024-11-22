@@ -28,11 +28,13 @@
  */
 
 package org.firstinspires.ftc.teamcode.auto;
-/* this is an autonomous program for red. Start centered on tile F2 along wall.
-    It uses the SparkFun OTOS sensor to control driving.
-    It drives forward to push a sample into the net zone,
-    then moves to tile E2, then backs up to E6 before parking in the
-    red observation zone.
+/* 
+ * Team 10785's auto test.
+ * Plan:
+ * 1. Fix strafing
+ * 2. Add specimen (use preset from tele)
+ * 3. Create class for "odo_auto"
+ * Is this goated?
 */
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -40,6 +42,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.subsystem.slide.LinearSlide;
+import org.firstinspires.ftc.teamcode.subsystem.vec2d;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Mat;
 
@@ -60,9 +63,9 @@ public class auto_odo_test extends LinearOpMode {
     final double STRAFE_GAIN =  0.15;   // 0.015 Strafe Speed Control "Gain".  eg: Ramp up to 25% power at a 25 degree Yaw error.   (0.25 / 25.0)
     final double TURN_GAIN   =  0.03;   // 0.01 Turn Control "Gain".  eg: Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
 
-    final double MAX_AUTO_SPEED = 0.4;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double MAX_AUTO_STRAFE= 0.4;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double MAX_AUTO_TURN  = 0.4;   //  Clip the turn speed to this max value (adjust for your robot)
+    final double MAX_AUTO_SPEED = 0.7;   //  Clip the approach speed to this max value (adjust for your robot)
+    final double MAX_AUTO_STRAFE= 0.7;   //  Clip the approach speed to this max value (adjust for your robot)
+    final double MAX_AUTO_TURN  = 0.7;   //  Clip the turn speed to this max value (adjust for your robot)
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -112,7 +115,7 @@ public class auto_odo_test extends LinearOpMode {
             telemetry.addData("Status", "Initialized");
             telemetry.update();
             slide.setArmPos(0,0); //set arm to default state
-            slide.ungrabAll(); //
+            slide.grabAll(); //
             slide.rotServo.setPosition(slide.LOW_ROT); //wrist down
 
         }
@@ -122,7 +125,7 @@ public class auto_odo_test extends LinearOpMode {
         telemetry.addData("Status", "Running");
         telemetry.update();
 
-        instruct2();
+        instruct3();
 
     }
 
@@ -133,13 +136,13 @@ public class auto_odo_test extends LinearOpMode {
         slide.setArmPos(1030,645); // extend arm outwards
         sleep(1000);
         otosDrive(0, -31.0,0,1); // drive forwards
-        slide.rotServo.setPosition(slide.LOW_ROT); // angle wrist down
+        slide.rotServo.setPosition(slide.LOW_ROT); // angle wrist dow
         sleep(1000);
         slide.setArmPos(640,610); //retract arm
         sleep(1000);
         otosDrive(0, -24.5,0,2); // drive backwards
         sleep(1000);
-        slide.grabAll(); // release specimen
+        slide.ungrabAll(); // release specimen
         sleep(1000);
         slide.setArmPos(900,900); // move arm backwards
         sleep(1000);
@@ -154,7 +157,7 @@ public class auto_odo_test extends LinearOpMode {
     }
 
     private void instruct3(){
-        otosDrive(-12,0,0,5);
+        otosDrive(12,0,0,5);
     }
 
     private void instruct4(){
@@ -253,18 +256,17 @@ public class auto_odo_test extends LinearOpMode {
 //        double opp, adj;
 
         SparkFunOTOS.Pose2D currentPos = myPosition();
-        xError = targetX-currentPos.x;
-        yError = targetY-currentPos.y;
-        yawError = targetHeading-currentPos.h;
+        vec2d move = new vec2d(targetX - currentPos.x, targetY-currentPos.y, targetHeading-currentPos.h);
 
         runtime.reset();
 
-        while(opModeIsActive() && (runtime.milliseconds() < maxTime*1000) &&
-                ((Math.abs(xError) > 0.5) || (Math.abs(yError) > 0.5) || (Math.abs(yawError) > 4)) ) {
+        while(opModeIsActive() && (runtime.milliseconds() < maxTime*1000) && (!move.approx_equal(targetX, targetY, targetHeading))){
+            move.normalize();
+
             // Use the speed and turn "gains" to calculate how we want the robot to move.
-            drive  = Range.clip(yError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-            strafe = Range.clip(xError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
-            turn = Range.clip(yawError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
+            drive  = Range.scale(move.y, -1, 1, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            strafe = Range.scale(move.x, -1, 1, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+            turn = Range.scale(move.theta, -360, 360, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
             telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             // current x,y swapped due to 90 degree rotation
@@ -274,13 +276,10 @@ public class auto_odo_test extends LinearOpMode {
             telemetry.addData("target X coordinate", targetX);
             telemetry.addData("target Y coordinate", targetY);
             telemetry.addData("target Heading angle", targetHeading);
-            telemetry.addData("xError", xError);
-            telemetry.addData("yError", yError);
-            telemetry.addData("yawError", yawError);
             telemetry.update();
 
             // Apply desired axes motions to the drivetrain.
-            moveRobot(drive, strafe, turn);
+            moveRobot(new vec2d(drive, strafe, turn));
 
             // then recalc error
             currentPos = myPosition();
@@ -288,7 +287,7 @@ public class auto_odo_test extends LinearOpMode {
             yError = targetY-currentPos.y;
             yawError = targetHeading-currentPos.h;
         }
-        moveRobot(0,0,0);
+        moveRobot(new vec2d(0,0,0));
         currentPos = myPosition();
         telemetry.addData("current X coordinate", currentPos.x);
         telemetry.addData("current Y coordinate", currentPos.y);
@@ -310,32 +309,19 @@ public class auto_odo_test extends LinearOpMode {
      * Positive X is strafe right
      * Positive Heading is counterclockwise: note this is not how the IMU reports yaw(heading)
      */
-    void moveRobot(double y, double x, double yaw) {
-
-        // Calculate magnitude, direction, and turn
-        double dir = Math.atan2(y,x);
-        double mag = Math.hypot(y,x);
-        double turn = yaw;
-
-        // Get sin, cos, and max:
-        double sin = Math.sin(dir-(Math.PI/4));
-        double cos = Math.cos(dir-(Math.PI/4));
-        double maxim = Math.max(Math.abs(sin), Math.abs(cos));
-
-
-
+    void moveRobot(vec2d movement) {
         // Calculate wheel powers.
-        double leftFrontPower    =  mag*cos/maxim + turn;
-        double rightFrontPower   =  mag*sin/maxim - turn;
-        double leftBackPower     =  mag*sin/maxim + turn;
-        double rightBackPower    =  mag*cos/maxim - turn;
+        double leftFrontPower    =  movement.x + movement.y + movement.rot;
+        double rightFrontPower   =  movement.x - movement.y - movement.rot;
+        double leftBackPower     =  movement.x - movement.y + movement.rot;
+        double rightBackPower    =  movement.x + movement.y - movement.rot;
 
         // Normalize wheel powers to be less than 1.0
-        if ((mag+Math.abs(turn)) > 1.0) {
-            leftFrontPower /= mag+turn;
-            rightFrontPower /= mag+turn;
-            leftBackPower /= mag+turn;
-            rightBackPower /= mag+turn;
+        if ((movement.mag+Math.abs(movement.rot)) > 1.0) {
+            leftFrontPower /= movement.mag + movement.rot;
+            rightFrontPower /= movement.mag + movement.rot;
+            leftBackPower /= movement.mag + movement.rot;
+            rightBackPower /= movement.mag + movement.rot;
         }
 
         // Send powers to the wheels.

@@ -60,6 +60,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
     boolean rotTrigged = false;
     int limit = 0;
 
+    // For "wrist"
     public static int ROT_MIN = 0;
     public static int ROT_MAX_EXTEND = 280;
     public static int ROT_MAX;
@@ -102,6 +103,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             updateTeleOpTelemetry();
             telemetry.update();
         }
+        slide.turnServoRot(0.0);
         waitForStart();
 
         while (opModeIsActive()) {
@@ -128,25 +130,25 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         if (gamepad2.a) {
             rotMotorSteps = MIN_ROT  + limit;
             armMotorSteps = MIN_HEIGHT;
-            slide.turnFloor();
-            slide.place = false;
+            slide.turnPlace();
+            slide.place = true;
             mode = DEFAULT;
         } else if (gamepad2.b) {
-             rotMotorSteps = ROT_PICKUP + limit;
-             armMotorSteps = ARM_PICKUP;
+             rotMotorSteps = 1140;
+             armMotorSteps = 0;
+             slide.turnServoRot(1.0);
             // slide.turnPlaceEx();
             // slide.place=true;
             // mode = DEFAULT;
             slide.rotServo.setPosition(SERVOROT_PICKUP);
         } else if (gamepad2.x) {
-            rotMotorSteps = MEDIUM_ROT+30 + limit;
+            rotMotorSteps = 1020;
             armMotorSteps = MIN_HEIGHT;
-            slide.turnFloor();
-            slide.place=false;
+            slide.rotServo.setPosition(slide.RFLOOR);
             mode = DEFAULT;
         } else if (gamepad2.y) {
-            rotMotorSteps = HIGH_ROT + limit - 195;
-            armMotorSteps = 790;
+            rotMotorSteps = 725;
+            armMotorSteps = 1590;
             mode = DEFAULT;
         }else
         if (gamepad2.dpad_left){
@@ -231,7 +233,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
                     if (slide.slideMotor.getCurrentPosition() < 500 && slide.rotMotor.getCurrentPosition() < 840) {
                         mode = EXTENDOFLOOR;
                     } else if (slide.rotMotor.getCurrentPosition() > 840) {
-                        mode = EXTENDOBOARD;
+                        mode = DEFAULT;
                         }
 
                 }
@@ -287,10 +289,12 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         if (!detectedRotTrig) {
             if (gamepad2.right_trigger > DEAD_ZONE_P2 && rotTrigged) {
                 slide.place = true;
+                slide.turnPlace();
                 detectedRotTrig = true;
                 rotTrigged = false;
             } else if (gamepad2.right_trigger > DEAD_ZONE_P2 && !rotTrigged) {
                 slide.place = false;
+                slide.turnFloor();
                 detectedRotTrig = true;
                 rotTrigged = true;
             }
@@ -300,7 +304,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         }
 
         if (gamepad2.left_trigger > 0.5) {
-            slide.turnRot(slide.droneServo, 0.60);
+            slide.turnServoRot(1.0 - slide.rotServo.getPosition());
         }
 
     }
