@@ -28,46 +28,35 @@
  */
 
 package org.firstinspires.ftc.teamcode.auto;
-/* 
- * Team 10785's auto test.
- * Plan:
- * 1. Fix strafing
- * 2. Add specimen (use preset from tele)
- * 3. Create class for "odo_auto"
- * Is this goated?
-*/
-
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.subsystem.drive.OldDrive;
 import org.firstinspires.ftc.teamcode.subsystem.slide.LinearSlide;
-import org.firstinspires.ftc.teamcode.subsystem.vec2d;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.opencv.core.Mat;
-
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="Auto Odo Test", group="auto")
+@Autonomous(name="Auto Odo New", group="auto")
 //@Disabled
-public class auto_odo_test extends LinearOpMode {
+public class auto_odo_new extends LinearOpMode {
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
     //  Drive = Error * Gain    Make these values smaller for smoother control, or larger for a more aggressive response.
-    final double SPEED_GAIN  =  0.03;   // 0.02 Forward Speed Control "Gain". eg: Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
-    final double STRAFE_GAIN =  0.15;   // 0.015 Strafe Speed Control "Gain".  eg: Ramp up to 25% power at a 25 degree Yaw error.   (0.25 / 25.0)
-    final double TURN_GAIN   =  0.03;   // 0.01 Turn Control "Gain".  eg: Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
+    final double SPEED_GAIN = 0.03;   // 0.02 Forward Speed Control "Gain". eg: Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
+    final double STRAFE_GAIN = 0.15;   // 0.015 Strafe Speed Control "Gain".  eg: Ramp up to 25% power at a 25 degree Yaw error.   (0.25 / 25.0)
+    final double TURN_GAIN = 0.03;   // 0.01 Turn Control "Gain".  eg: Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
 
-    final double MAX_AUTO_SPEED = 0.7;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double MAX_AUTO_STRAFE= 0.7;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double MAX_AUTO_TURN  = 0.7;   //  Clip the turn speed to this max value (adjust for your robot)
+    final double MAX_AUTO_SPEED = 0.4;   //  Clip the approach speed to this max value (adjust for your robot)
+    final double MAX_AUTO_STRAFE = 0.4;   //  Clip the approach speed to this max value (adjust for your robot)
+    final double MAX_AUTO_TURN = 0.4;   //  Clip the turn speed to this max value (adjust for your robot)
+    double SPEED_CAP = 0.75;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -79,33 +68,27 @@ public class auto_odo_test extends LinearOpMode {
 
 
     LinearSlide slide;
-    OldDrive drive_bot;
 
     // Sensors
     private SparkFunOTOS myOtos;        // Optical tracking odometry sensor
     SparkFunOTOS.Pose2D pos;
 
-    private double max_power (double lf, double rf, double lb, double rb){
-        return Math.max(Math.max(lf,rf), Math.max(lb,rb));
-    }
-
     @Override
     public void runOpMode() {
-
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
-        leftFrontDrive  = hardwareMap.get(DcMotor.class, "motor_front_left");
-        leftBackDrive  = hardwareMap.get(DcMotor.class, "motor_back_left");
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "motor_front_left");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "motor_back_left");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "motor_front_right");
         rightBackDrive = hardwareMap.get(DcMotor.class, "motor_back_right");
 
         slide = new LinearSlide(hardwareMap);
-        drive_bot = new OldDrive(hardwareMap, this);
 
         leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
 
         // Get a reference to the sensor
         myOtos = hardwareMap.get(SparkFunOTOS.class, "my_otos");
@@ -118,12 +101,12 @@ public class auto_odo_test extends LinearOpMode {
         sleep(1000);
 
         //On initialization
-        while(!isStarted()) {
+        while (!isStarted()) {
             // Wait for the game to start (driver presses PLAY)
             telemetry.addData("Status", "Initialized");
             telemetry.update();
-            slide.setArmPos(0,0); //set arm to default state
-            slide.grabAll(); //
+            slide.setArmPos(0, 0); //set arm to default state
+            slide.ungrabAll(); //
             slide.rotServo.setPosition(slide.LOW_ROT); //wrist down
 
         }
@@ -133,51 +116,67 @@ public class auto_odo_test extends LinearOpMode {
         telemetry.addData("Status", "Running");
         telemetry.update();
 
-        instruct3();
+        instruct5();
 
     }
 
-    private void instruct1(){
-        otosDrive(-4, -25.5, 0, 2); // move forward
-        slide.setArmPos(0,645); //raise arm upwards
+    private void instruct1() {
+        otosDrive(0, -25.5, 0, 2); // move forward
+        slide.setArmPos(0, 645); //raise arm upwards
         sleep(1000);
-        slide.setArmPos(1030,645); // extend arm outwards
+        slide.setArmPos(1030, 645); // extend arm outwards
         sleep(1000);
-        otosDrive(0, -31.0,0,1); // drive forwards
-        slide.rotServo.setPosition(slide.LOW_ROT); // angle wrist dow
+        otosDrive(0, -31.0, 0, 1); // drive forwards
+        slide.rotServo.setPosition(slide.LOW_ROT); // angle wrist down
         sleep(1000);
-        slide.setArmPos(640,610); //retract arm
+        slide.setArmPos(640, 610); //retract arm
         sleep(1000);
-        otosDrive(0, -24.5,0,2); // drive backwards
+        otosDrive(0, -24.5, 0, 2); // drive backwards
         sleep(1000);
-        slide.ungrabAll(); // release specimen
+        slide.grabAll(); // release specimen
         sleep(1000);
-        slide.setArmPos(900,900); // move arm backwards
+        slide.setArmPos(900, 900); // move arm backwards
         sleep(1000);
-        otosDrive(0, 0,0,8); // drive backwards
-        slide.setArmPos(-30,0); //
+        otosDrive(0, 0, 0, 8); // drive backwards
+        slide.setArmPos(-30, 0); //
         slide.rotServo.setPosition(slide.HIGH_ROT); // wrist up
+        otosDrive(-30, 0, 0, 4);
         sleep(5000);
     }
 
     private void instruct2() {
-        otosDrive(0,12,0,5);
+        otosDrive(0, 12, 0, 5);
     }
 
-    private void instruct3(){
-        otosDrive(12,0,0,5);
+    private void instruct3() {
+        otosDrive(-12, 0, 0, 5);
     }
 
-    private void instruct4(){
+    private void instruct4() {
         slide.turnRot(slide.rotServo, LinearSlide.RFLOOR);
-        slide.place=false;
+        slide.place = false;
     }
 
-    private void instruct6(){
-        otosDrive(-6,0,0,0);
-        otosDrive(-6,6,0,0);
-        otosDrive(0,6,0,0);
-        otosDrive(0,0,0,0);
+    private void instruct5() {
+        runtime.reset();
+        while (runtime.milliseconds() <= 2000) {
+            leftFrontDrive.setPower(1);
+        }
+        runtime.reset();
+        while (runtime.milliseconds() <= 2000) {
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(1);
+        }
+        runtime.reset();
+        while (runtime.milliseconds() <= 2000) {
+            rightFrontDrive.setPower(0);
+            rightBackDrive.setPower(1);
+        }
+        runtime.reset();
+        while (runtime.milliseconds() <= 2000) {
+            rightBackDrive.setPower(0);
+            leftBackDrive.setPower(1);
+        }
     }
 
     private void configureOtos() {
@@ -271,22 +270,24 @@ public class auto_odo_test extends LinearOpMode {
         double currentRange, targetRange, initialBearing, targetBearing, xError, yError, yawError;
 //        double opp, adj;
 
-        SparkFunOTOS.Pose2D currentPos = myOtos.getPosition();
+        SparkFunOTOS.Pose2D currentPos = myPosition();
+        xError = targetX - currentPos.x;
+        yError = targetY - currentPos.y;
+        yawError = targetHeading - currentPos.h;
 
-        xError=targetX - currentPos.x;
-        yError=targetY - currentPos.y;
-        yawError=targetHeading - currentPos.h;
+        drive = Range.clip(yError, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+        strafe = Range.clip(xError, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
+        turn = Range.clip(yawError, -MAX_AUTO_TURN, MAX_AUTO_TURN);
+
         runtime.reset();
 
-
-
-        while(opModeIsActive() && (runtime.milliseconds() < maxTime*1000) && ((Math.abs(xError)>0.5)||(Math.abs(yError)>0.5)||(Math.abs(yawError)>4))){
+        while (opModeIsActive() && (runtime.milliseconds() < maxTime * 1000) && ((Math.abs(xError) > 0.5) || (Math.abs(yError) > 0.5) || (Math.abs(yawError) > 4))) {
             // Use the speed and turn "gains" to calculate how we want the robot to move.
-            drive  = Range.clip(yError*SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            drive = Range.clip(yError*SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
             strafe = Range.clip(xError*STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
             turn = Range.clip(yawError*TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
-            telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
+            telemetry.addData("Auto", "Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             // current x,y swapped due to 90 degree rotation
             telemetry.addData("current X coordinate", currentPos.x);
             telemetry.addData("current Y coordinate", currentPos.y);
@@ -294,20 +295,21 @@ public class auto_odo_test extends LinearOpMode {
             telemetry.addData("target X coordinate", targetX);
             telemetry.addData("target Y coordinate", targetY);
             telemetry.addData("target Heading angle", targetHeading);
+            telemetry.addData("xError", xError);
+            telemetry.addData("yError", yError);
+            telemetry.addData("yawError", yawError);
             telemetry.update();
 
             // Apply desired axes motions to the drivetrain.
-            drive_bot.driveBot(drive,strafe,turn);
-            // then recalc error
-            currentPos = myPosition();
-            xError = targetX-currentPos.x;
-            yError = targetY-currentPos.y;
-            yawError = targetHeading-currentPos.h;
+            moveRobot(drive, strafe, turn);
+
+            currentPos=myPosition();
+            xError = targetX - currentPos.x;
+            yError = targetY - currentPos.y;
+            yawError = targetHeading - currentPos.h;
         }
+        moveRobot(0, 0, 0);
         currentPos = myPosition();
-        telemetry.addData("current X coordinate", currentPos.x);
-        telemetry.addData("current Y coordinate", currentPos.y);
-        telemetry.addData("current Heading angle", currentPos.h);
         telemetry.update();
     }
 
@@ -317,8 +319,9 @@ public class auto_odo_test extends LinearOpMode {
     SparkFunOTOS.Pose2D myPosition() {
         pos = myOtos.getPosition();
         SparkFunOTOS.Pose2D myPos = new SparkFunOTOS.Pose2D(pos.x, pos.y, pos.h);
-        return(myPos);
+        return (myPos);
     }
+
     /**
      * Move robot according to desired axes motions assuming robot centric point of view
      * Positive Y is forward
@@ -326,18 +329,58 @@ public class auto_odo_test extends LinearOpMode {
      * Positive Heading is counterclockwise: note this is not how the IMU reports yaw(heading)
      */
     void moveRobot(double y, double x, double yaw) {
+
         // Calculate wheel powers.
-        double leftFrontPower    =  y + x + yaw;
-        double rightFrontPower   =  y - x - yaw;
-        double leftBackPower     =  y - x + yaw;
-        double rightBackPower    =  y + x - yaw;
+        double leftFrontPower = y + x + yaw;
+        double rightBackPower = y - x - yaw;
+        double leftBackPower = y - x + yaw;
+        double rightFrontPower = y + x - yaw;
+
+        // Normalize wheel powers to be less than 1.0
+        double max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
+        max = Math.max(max, Math.abs(leftBackPower));
+        max = Math.max(max, Math.abs(rightBackPower));
+        leftFrontPower /= max;
+        rightFrontPower /= max;
+        leftBackPower /= max;
+        rightBackPower /= max;
 
         // Send powers to the wheels.
         leftFrontDrive.setPower(leftFrontPower);
         rightFrontDrive.setPower(rightFrontPower);
         leftBackDrive.setPower(leftBackPower);
         rightBackDrive.setPower(rightBackPower);
-
         sleep(10);
+        telemetry.addData("LF", leftFrontPower);
+        telemetry.addData("RF", rightFrontPower);
+        telemetry.addData("LB", leftBackPower);
+        telemetry.addData("RB", rightBackPower);
+        telemetry.update();
+    }
+    void moveRobotDir(double angle, double yaw) {
+
+        // Calculate wheel powers.
+        double leftFrontPower = Math.cos(angle) + -1*Math.sin(angle) + yaw;
+        double rightBackPower = Math.cos(angle) - -1*Math.sin(angle) - yaw;
+        double leftBackPower = Math.cos(angle) - -1*Math.sin(angle) + yaw;
+        double rightFrontPower = Math.cos(angle) + -1*Math.sin(angle) - yaw;
+
+        // Normalize wheel powers to be less than 1.0
+        double max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
+        max = Math.max(max, Math.abs(leftBackPower));
+        max = Math.max(max, Math.abs(rightBackPower));
+        leftFrontPower /= max * (1/SPEED_CAP);
+        rightFrontPower /= max*(1/SPEED_CAP);
+        leftBackPower /= max*(1/SPEED_CAP);
+        rightBackPower /= max*(1/SPEED_CAP);
+
+        // Send powers to the wheels.
+        leftFrontDrive.setPower(leftFrontPower);
+        rightFrontDrive.setPower(rightFrontPower);
+        leftBackDrive.setPower(leftBackPower);
+        rightBackDrive.setPower(rightBackPower);
+        sleep(10);
+        telemetry.addData("Left Front Motor Value:", leftFrontDrive.getCurrentPosition());
+        telemetry.update();
     }
 }

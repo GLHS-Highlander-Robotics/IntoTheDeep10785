@@ -16,6 +16,8 @@ import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armM
 import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armMode.EXTENDOBOARD;
 import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armMode.EXTENDOFLOOR;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -85,6 +87,8 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        //View telemetry in FtcDashboard
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         drive = new OldDrive(hardwareMap, this);
         slide = new LinearSlide(hardwareMap);

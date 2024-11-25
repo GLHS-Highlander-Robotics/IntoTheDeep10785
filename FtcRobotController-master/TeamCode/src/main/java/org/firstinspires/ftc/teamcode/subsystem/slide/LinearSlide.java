@@ -209,11 +209,11 @@ public class LinearSlide {
     }
 //Grab functions
     public void ungrabL() {
-        leftGripper.setPosition(LOPEN);
+        leftGripper.setPosition(LCLOSE);
         leftLED.setState(false);
     }
     public void grabL() {
-        leftGripper.setPosition(LCLOSE);
+        leftGripper.setPosition(LOPEN);
         leftLED.setState(true);
     }
     public void ungrabR() {
