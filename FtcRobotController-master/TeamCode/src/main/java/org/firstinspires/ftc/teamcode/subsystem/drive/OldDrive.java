@@ -37,10 +37,10 @@ public class OldDrive {
     /* -------Constructor------- */
 
     public OldDrive (HardwareMap hardwareMap, LinearOpMode linearopmode) {
-        frontLeftMotor = hardwareMap.get(DcMotor.class, "motor_front_left");
-        frontRightMotor = hardwareMap.get(DcMotor.class, "motor_front_right");
-        backLeftMotor = hardwareMap.get(DcMotor.class, "motor_back_left");
-        backRightMotor = hardwareMap.get(DcMotor.class, "motor_back_right");
+        frontLeftMotor = hardwareMap.get(DcMotor.class, "leftFront");
+        frontRightMotor = hardwareMap.get(DcMotor.class, "rightFront");
+        backLeftMotor = hardwareMap.get(DcMotor.class, "leftBack");
+        backRightMotor = hardwareMap.get(DcMotor.class, "rightBack");
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
         imu.initialize(parameters);

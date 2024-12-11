@@ -15,14 +15,19 @@
  * updates to the FTC SDK into your code.
  */
 
-import java.util.regex.Pattern
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 apply plugin: 'com.android.application'
 
+java {
+ //   toolchain {
+ //       languageVersion = JavaLanguageVersion.of(8)
+ //   }
+}
 android {
 
-    compileSdkVersion 29
-
+    compileSdkVersion 30
     signingConfigs {
         release {
             def apkStoreFile = System.getenv("APK_SIGNING_STORE_FILE")
@@ -38,7 +43,6 @@ android {
                 storePassword 'android'
             }
         }
-
         debug {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
@@ -108,10 +112,6 @@ android {
 
     packagingOptions {
         pickFirst '**/*.so'
-    }
-    sourceSets.main {
-        jni.srcDirs = []
-        jniLibs.srcDir rootProject.file('libs')
     }
     ndkVersion '21.3.6528147'
 }

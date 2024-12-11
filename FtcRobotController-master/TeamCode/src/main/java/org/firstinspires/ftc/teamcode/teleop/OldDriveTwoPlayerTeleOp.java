@@ -17,6 +17,7 @@ import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armM
 import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armMode.EXTENDOFLOOR;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -27,6 +28,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.subsystem.drive.OldDrive;
 import org.firstinspires.ftc.teamcode.subsystem.slide.LinearSlide;
 
+@Config
 @TeleOp (name = "OGTwoPlayerTeleop")
 public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
     public static double HIGH_POWER = 1.0;
@@ -60,6 +62,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
     boolean detectedRot = false;
     boolean detectedRotTrig = false;
     boolean rotTrigged = false;
+    boolean lrotTrigged = false;
     int limit = 0;
 
     // For "wrist"
@@ -69,13 +72,16 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
 
 
     public static int ARM_MIN;
-    public static int ARM_MAX_DOWN = 2500;
+    public static int ARM_MAX_DOWN = 2700;
+    public static int ARM_MAX = 3600;
 
 
     // PRESET FOR PICKING UP SPECIMEN OFF WALL:
     public static int ARM_PICKUP = 0;
     public static int ROT_PICKUP = 980;
     public static int SERVOROT_PICKUP = 845;
+    int rot_state=0;
+    boolean right_trig=false;
 
 
     public enum armMode {
@@ -98,7 +104,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         drive.imu.resetYaw();
         slide.ungrabL();
         slide.ungrabR();
-        slide.turnRot(slide.rotServo, 0.3);
+        slide.turnRot(slide.rotServo, 0);
         slide.turnRot(slide.droneServo, 1);
         slide.place = false;
         slide.rightLED.setState(false);
@@ -106,10 +112,13 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         while (opModeInInit()) {
             updateTeleOpTelemetry();
             telemetry.update();
+            slide.rotMotor.setPower(-0.1);
+            slide.slideMotor.setPower(-0.1);
         }
         slide.turnServoRot(0.0);
         waitForStart();
-
+        slide.rotMotor.setPower(-1);
+        slide.slideMotor.setPower(-1);
         while (opModeIsActive()) {
             updateDriveByGamepad();
             updateSlideByGamepad();
@@ -135,15 +144,13 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             rotMotorSteps = MIN_ROT  + limit;
             armMotorSteps = MIN_HEIGHT;
             slide.turnPlace();
-            slide.place = true;
-            mode = DEFAULT;
+            slide.turnServoRot(0.5);
+            //slide.place = true;
+            //mode = DEFAULT;
         } else if (gamepad2.b) {
-             rotMotorSteps = 1140;
-             armMotorSteps = 0;
-             slide.turnServoRot(1.0);
-            // slide.turnPlaceEx();
-            // slide.place=true;
-            // mode = DEFAULT;
+            armMotorSteps = 0;
+            rotMotorSteps=1070;
+            slide.turnServoRot(0.35);
             slide.rotServo.setPosition(SERVOROT_PICKUP);
         } else if (gamepad2.x) {
             rotMotorSteps = 1020;
@@ -152,7 +159,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             mode = DEFAULT;
         } else if (gamepad2.y) {
             rotMotorSteps = 725;
-            armMotorSteps = 1590;
+            armMotorSteps = 0;
             mode = DEFAULT;
         }else
         if (gamepad2.dpad_left){
@@ -252,7 +259,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             break;
         }
 
-        armMotorSteps = Range.clip(armMotorSteps, MIN_HEIGHT, MAX_HEIGHT);
+        armMotorSteps = Range.clip(armMotorSteps, 0, 3400);
         rotMotorSteps = Range.clip(rotMotorSteps, MIN_ROT + limit, MAX_ROT + limit);
         slide.setArmPos(armMotorSteps, rotMotorSteps);
 
@@ -289,32 +296,38 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
                 detectedL = false;
             }
         }
-        // rotation trigger
-        if (!detectedRotTrig) {
-            if (gamepad2.right_trigger > DEAD_ZONE_P2 && rotTrigged) {
-                slide.place = true;
-                slide.turnPlace();
-                detectedRotTrig = true;
-                rotTrigged = false;
-            } else if (gamepad2.right_trigger > DEAD_ZONE_P2 && !rotTrigged) {
-                slide.place = false;
-                slide.turnFloor();
-                detectedRotTrig = true;
-                rotTrigged = true;
-            }
-        } else {
-            if (gamepad2.right_trigger > DEAD_ZONE_P2)
-                detectedRotTrig = false;
+
+        if (gamepad2.right_trigger > 0.5&&!right_trig) {
+            rot_state++;
+            setRotState(rot_state%4);
+            right_trig=true;
+        }
+        else if(gamepad2.right_trigger <= 0.5){
+            right_trig=false;
         }
 
-        if (gamepad2.left_trigger > 0.5) {
-            slide.turnServoRot(1.0 - slide.rotServo.getPosition());
-        }
+
+
 
     }
 
 
-
+    void setRotState(int servorot){
+        switch (servorot){
+            case 0:
+                slide.turnServoRot(0);
+                break;
+            case 1:
+                slide.turnServoRot(0.5);
+                break;
+            case 2:
+                slide.turnServoRot(0.75);
+                break;
+            case 3:
+                slide.turnServoRot(1);
+                break;
+        }
+    }
 
 
 
@@ -373,6 +386,10 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         if(rotMotorSteps<=ROT_MAX_EXTEND){
             armMotorSteps = clamp(armMotorSteps, 0, ARM_MAX_DOWN);
         }
+        else{
+            armMotorSteps = clamp(armMotorSteps, 0, ARM_MAX);
+        }
+        slide.setSlide(armMotorSteps);
     }
 
     public void updateTeleOpTelemetry() {
@@ -388,5 +405,6 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         telemetry.addData("Place position?", slide.place);
         telemetry.addData("Turn Rot:", slide.rotServo.getPosition());
         telemetry.addData("Extendo Mode:", mode);
+        telemetry.addData("ServoState:", rot_state);
     }
 }

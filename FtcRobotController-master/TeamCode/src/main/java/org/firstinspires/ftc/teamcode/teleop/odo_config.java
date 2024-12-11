@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -20,10 +21,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  *
  * See the sensor's product page: https://www.sparkfun.com/products/24904
  */
+@Config
 @TeleOp(name = "otos_conf", group = "auto")
 public class odo_config extends LinearOpMode {
     // Create an instance of the sensor
     SparkFunOTOS myOtos;
+
+    public static double AngErr=1, LinErr=1;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -44,10 +48,15 @@ public class odo_config extends LinearOpMode {
             // heading angle
             SparkFunOTOS.Pose2D pos = myOtos.getPosition();
 
+            SparkFunOTOS.Pose2D targetPos = new SparkFunOTOS.Pose2D(0,12,0);
+
             // Log the position to the telemetry
             telemetry.addData("X coordinate", pos.x);
             telemetry.addData("Y coordinate", pos.y);
             telemetry.addData("Heading angle", pos.h);
+            telemetry.addData("X error", pos.x-targetPos.x);
+            telemetry.addData("Y error", pos.y-targetPos.y);
+            telemetry.addData("Heading error", pos.h-targetPos.y);
             telemetry.addData("Running?", opModeIsActive());
 
             // Update the telemetry on the driver station
@@ -73,7 +82,7 @@ public class odo_config extends LinearOpMode {
         // Assuming you've mounted your sensor to a robot and it's not centered,
         // you can specify the offset for the sensor relative to the center of the
         // robot. The units default to inches and degrees, but if you want to use
-        // different units, specify them before setting the offset! Note that as of
+        // different units, specify them before setting the offset! Note that as of`
         // firmware version 1.0, these values will be lost after a power cycle, so
         // you will need to set them each time you power up the sensor. For example, if
         // the sensor is mounted 5 inches to the left (negative X) and 10 inches
@@ -81,7 +90,7 @@ public class odo_config extends LinearOpMode {
         // clockwise (negative rotation) from the robot's orientation, the offset
         // would be {-5, 10, -90}. These can be any value, even the angle can be
         // tweaked slightly to compensate for imperfect mounting (eg. 1.3 degrees).
-        SparkFunOTOS.Pose2D offset = new SparkFunOTOS.Pose2D(7, 0.25, 180);
+        SparkFunOTOS.Pose2D offset = new SparkFunOTOS.Pose2D(7, 0.25, 0);
         myOtos.setOffset(offset);
 
         // Here we can set the linear and angular scalars, which can compensate for
@@ -100,8 +109,8 @@ public class odo_config extends LinearOpMode {
         // multiple speeds to get an average, then set the linear scalar to the
         // inverse of the error. For example, if you move the robot 100 inches and
         // the sensor reports 103 inches, set the linear scalar to 100/103 = 0.971
-        myOtos.setLinearScalar(1.2885);
-        myOtos.setAngularScalar(1);
+        myOtos.setLinearScalar(LinErr);
+        myOtos.setAngularScalar(AngErr);
 
         // The IMU on the OTOS includes a gyroscope and accelerometer, which could
         // have an offset. Note that as of firmware version 1.0, the calibration

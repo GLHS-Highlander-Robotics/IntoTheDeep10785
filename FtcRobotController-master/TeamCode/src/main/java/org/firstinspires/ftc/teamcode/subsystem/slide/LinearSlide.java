@@ -18,7 +18,7 @@ public class LinearSlide {
     public static int MIN_HEIGHT = 0;
     public static int LOW_HEIGHT = 515;
     public static int MEDIUM_HEIGHT = 1600;
-    public static int MAX_HEIGHT = 2760;
+    public static int MAX_HEIGHT = 3400;
     public static int INCREMENT_STEPS_SLIDE = 40;
     public static double INCHESPERTICK = 16.75/1835;
 
@@ -47,7 +47,7 @@ public class LinearSlide {
     
     //Grip pos
     public static double RFLOOR = 0;
-    public static double RPLACE = 0.45;
+    public static double RPLACE = 0;
     public static double RWALL = 1;
 
     public static double RCLOSE = 0;

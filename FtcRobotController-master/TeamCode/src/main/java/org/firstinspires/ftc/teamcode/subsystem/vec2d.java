@@ -10,8 +10,8 @@ public class vec2d {
         dir = dir_i;
         rot = rot_i;
 
-        x = mag_i*Math.sin(dir_i);
-        y = mag_i*Math.cos(dir_i);
+        x = mag_i*Math.sin(Math.toRadians(dir_i));
+        y = mag_i*Math.cos(Math.toRadians(dir_i));
         theta = rot_i;
     }
 
@@ -21,7 +21,7 @@ public class vec2d {
         theta=theta_i;
 
         mag=Math.sqrt(x_i*x_i+y_i*y_i);
-        dir=Math.atan(y_i/x_i);
+        dir=Math.toDegrees(Math.atan2(x_i, y_i));
         rot = theta_i;
     }
 
@@ -33,8 +33,8 @@ public class vec2d {
     public void normalize(){
         mag = 1;
 
-        x = Math.sin(dir);
-        y = Math.cos(dir);
+        x = Math.sin(Math.toRadians(dir));
+        y = Math.cos(Math.toRadians(dir));
         theta = rot;
     }
 
