@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.subsystem;
+package org.firstinspires.ftc.teamcode.subsystem.math;
 
 public class vec2d {
     public double mag, dir, rot;

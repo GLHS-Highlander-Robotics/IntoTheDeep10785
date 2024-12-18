@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystem.slide;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -273,5 +274,23 @@ public class LinearSlide {
 
     public void turnServoRot(double position){
         rotServo.setPosition(position);
+    }
+
+    public static double slideDeadband(double input, double deadbandThreshold) {
+        // If the absolute value of input is within the deadband, return 0
+        if (Math.abs(input) <= deadbandThreshold) {
+            return 0.0;
+        }
+        // Determine the sign and magnitude outside the deadband
+        return input;
+    }
+
+    public void zero(){
+        rotMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        while(slideDeadband(rotMotor.getVelocity(), 0.3)!=0){
+            rotMotor.setTargetPosition(-20);
+            rotMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        }
+        rotMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 }

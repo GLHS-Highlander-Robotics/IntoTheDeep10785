@@ -390,6 +390,9 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             armMotorSteps = clamp(armMotorSteps, 0, ARM_MAX);
         }
         slide.setSlide(armMotorSteps);
+        if(gamepad2.left_bumper){
+            slide.zero();
+        }
     }
 
     public void updateTeleOpTelemetry() {

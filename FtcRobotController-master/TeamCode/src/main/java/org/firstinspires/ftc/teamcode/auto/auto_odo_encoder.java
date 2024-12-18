@@ -29,7 +29,7 @@
 package org.firstinspires.ftc.teamcode.auto;
 
 import org.firstinspires.ftc.teamcode.subsystem.drive.OdoDrive;
-import org.firstinspires.ftc.teamcode.subsystem.vec2d;
+import org.firstinspires.ftc.teamcode.subsystem.math.vec2d;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
