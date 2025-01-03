@@ -142,51 +142,55 @@ public class auto_odo_legacy extends LinearOpMode {
     }
 
     void auto1(){
-        otosDrive(0,20,0,3);
+        otosDrive(0,24,0,3);
         stopBot();
-        slide.setRot(660);
+        slide.setRot(750);
         slide.setSlide(200);
-        sleep(500);
+        sleep(400);
         slide.turnServoRot(0.75);
-        sleep(1000);
-        otosDrive(0,10,0,2);
+        sleep(800);
+        otosDrive(0,12.5,0,2);
         stopBot();
-        slide.setRot(620);
-        sleep(500);
-        slide.setSlide(2500);
+        slide.setRot(680);
+        sleep(400);
+        slide.setSlide(1775);
         sleep(1500);
         slide.grabAll();
-        sleep(200);
+        sleep(100);
         slide.ungrabAll();
-        slide.setRot(660);
+        sleep(100);
+        slide.setRot(800);
         slide.setSlide(200);
-        sleep(500);
-        slide.setRot(1180);
+        sleep(200);
+        slide.setRot(1100);
         slide.setSlide(0);
-        sleep(2000);
-        otosDrive(40,-17,0,5);
+        sleep(1000);
+        otosDrive(40,-20.5,0,5);
         stopBot();
         slide.turnServoRot(0.35);
         slide.grabAll();
-        otosDrive(0,-6,0,2);
+        sleep(500);
+        otosDrive(0,-10,0,2);
         stopBot();
         slide.ungrabAll();
+        sleep(500);
         slide.setRot(0);
         slide.setSlide(0);
-        sleep(1500);
-        slide.setRot(660);
-        otosDrive(-40,20,0,5);
+        sleep(500);
+        slide.setRot(620);
+        otosDrive(-48,20,0,5);
         slide.turnServoRot(0.75);
-        otosDrive(0,9,0,2);
-        slide.setSlide(2000);
-        sleep(2000);
+        otosDrive(0,9.25,0,2);
+        slide.setSlide(1700);
+        sleep(1700);
         slide.grabAll();
-        sleep(250);
+        sleep(150);
         slide.ungrabAll();
         otosDrive(0,-15,0,3);
         slide.setRot(0);
         slide.setSlide(0);
-        sleep(1500);
+        otosDrive(30,-9.5,0,2);
+        sleep(1400);
     }
 
     private void configureOtos() {
