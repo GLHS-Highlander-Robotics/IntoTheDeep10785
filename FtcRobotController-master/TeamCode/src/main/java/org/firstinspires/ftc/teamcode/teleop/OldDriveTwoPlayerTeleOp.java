@@ -15,6 +15,7 @@ import static org.firstinspires.ftc.teamcode.subsystem.slide.LinearSlide.MIN_ROT
 import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armMode.DEFAULT;
 import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armMode.EXTENDOBOARD;
 import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armMode.EXTENDOFLOOR;
+import static org.firstinspires.ftc.teamcode.teleop.OldDriveTwoPlayerTeleOp.armMode.NEWEXTENDO;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -63,6 +64,8 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
     boolean detectedRotTrig = false;
     boolean rotTrigged = false;
     boolean lrotTrigged = false;
+    double armInches, rotDegrees;
+    double ARM_EXT_MIN=160, ARM_EXT_MAX=540;
     int limit = 0;
 
     // For "wrist"
@@ -85,7 +88,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
 
 
     public enum armMode {
-        EXTENDOFLOOR, EXTENDOBOARD, DEFAULT
+        EXTENDOFLOOR, EXTENDOBOARD, DEFAULT, NEWEXTENDO
     }
     armMode mode = DEFAULT;
 
@@ -144,7 +147,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
             rotMotorSteps = MIN_ROT  + limit;
             armMotorSteps = MIN_HEIGHT;
             slide.turnPlace();
-            slide.turnServoRot(0.5);
+            slide.turnServoRot(0.75);
             //slide.place = true;
             //mode = DEFAULT;
         } else if (gamepad2.b) {
@@ -155,19 +158,28 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
         } else if (gamepad2.x) {
             rotMotorSteps = 1020;
             armMotorSteps = MIN_HEIGHT;
-            slide.rotServo.setPosition(slide.RFLOOR);
+            slide.rotServo.setPosition(0.25);
             mode = DEFAULT;
         } else if (gamepad2.y) {
             rotMotorSteps = 725;
             armMotorSteps = 0;
             mode = DEFAULT;
-        }else
-        if (gamepad2.dpad_left){
-            slide.place = true;
-            rotMotorSteps = 500 + limit;
-            armMotorSteps=MIN_HEIGHT;
-            mode = DEFAULT;
+        }else if (gamepad2.dpad_left){
+            if(mode == DEFAULT){
+                mode = NEWEXTENDO;
+            }
+            else if(mode == NEWEXTENDO){
+                mode = DEFAULT;
+            }
+            else mode = DEFAULT;
         }
+//        UNCOMMENT IF ROBOT BROKEN!!!!!
+//        if (gamepad2.dpad_left){
+//            slide.place = true;
+//            rotMotorSteps = 500 + limit;
+//            armMotorSteps=MIN_HEIGHT;
+//            mode = DEFAULT;
+//        }
         // Increase arm and rotation steps by increments using p2 sticks
         switch (mode) {
             case EXTENDOFLOOR:
@@ -249,6 +261,7 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
 
                 }
 
+
                 if (gamepad2.right_bumper) {
                     limit -= 10;
                     rotMotorSteps -= 10;
@@ -256,6 +269,23 @@ public class OldDriveTwoPlayerTeleOp extends LinearOpMode {
                 limit += 10;
                 rotMotorSteps += 10;
             }
+            break;
+            case NEWEXTENDO:
+                if (-gamepad2.left_stick_y > DEAD_ZONE_P2) {
+                    armMotorSteps += INCREMENT_STEPS_SLIDE;
+                    leftStickPressed = true;
+                } else if (-gamepad2.left_stick_y < -DEAD_ZONE_P2) {
+                    armMotorSteps -= INCREMENT_STEPS_SLIDE;
+                    leftStickPressed = true;
+                }
+                //Clamp Arm Range
+                Range.clip(armMotorSteps, ARM_EXT_MIN, ARM_EXT_MAX);
+                //Convert ticks to inches
+                armInches = 13.5 + 0.01*armMotorSteps;
+                //Convert inches to degrees
+                rotDegrees = -Math.asin(5.5/armInches)*(180/Math.PI);
+                //Convert degrees to ticks
+                rotMotorSteps = (int) (Math.round((rotDegrees+38)/0.1545));
             break;
         }
 

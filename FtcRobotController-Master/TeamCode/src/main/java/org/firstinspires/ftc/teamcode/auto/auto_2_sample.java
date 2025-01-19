@@ -44,8 +44,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Config
-@Autonomous(name="Auto Legacy", group="auto")
-public class auto_odo_legacy extends LinearOpMode {
+@Autonomous(name="3 Sample + 0 Specimen Auto", group="auto")
+public class auto_2_sample extends LinearOpMode {
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
     //  Drive = Error * Gain    Make these values smaller for smoother control, or larger for a more aggressive response.
@@ -58,7 +58,7 @@ public class auto_odo_legacy extends LinearOpMode {
     final double MAX_AUTO_TURN = 0.4;   //  Clip the turn speed to this max value (adjust for your robot)
     double SPEED_CAP = 0.75; // Between 0 and 1, idk what default should be
     double TURN_CAP = 0.5;// Between 0 and 1, idk what default should be;
-    public static   double A=0.5,B=7.0;
+    public static   double A=0.5,B=7.0, A_ROT = 0.1, B_ROT = 34.2;
     double ovr_H_err = 0;
 
     private ElapsedTime runtime = new ElapsedTime();
@@ -140,57 +140,56 @@ public class auto_odo_legacy extends LinearOpMode {
 
         auto1();
     }
-
     void auto1(){
-        otosDrive(0,24,0,3);
+        otosDrive(0, 20, 0, 3);
         stopBot();
-        slide.setRot(750);
-        slide.setSlide(200);
-        sleep(400);
-        slide.turnServoRot(0.75);
-        sleep(800);
-        otosDrive(0,12.5,0,2);
-        stopBot();
-        slide.setRot(680);
-        sleep(400);
-        slide.setSlide(1775);
-        sleep(1500);
-        slide.grabAll();
-        sleep(100);
-        slide.ungrabAll();
-        sleep(100);
-        slide.setRot(800);
-        slide.setSlide(200);
-        sleep(200);
-        slide.setRot(1100);
-        slide.setSlide(0);
+        slide.setRot(700);
         sleep(1000);
-        otosDrive(40,-20.5,0,5);
-        stopBot();
-        slide.turnServoRot(0.35);
+        slide.setSlide(1600);
+        sleep(1000);
+        slide.setRot(650);
+        slide.turnServoRot(1);
+        sleep(1000);
         slide.grabAll();
+        sleep(250);
+        slide.setRot(700);
         sleep(500);
-        otosDrive(0,-10,0,2);
+        otosDrive(3, -2,-100 ,2);
+        stopBot();
+        slide.setSlide(0);
+        slide.setRot(0);
+        slide.turnServoRot(0.5);
+        sleep(1000);
+        stopBot();
+        slide.setSlide(290);
+        otosDrive(0,23,0,5);
         stopBot();
         slide.ungrabAll();
-        sleep(500);
-        slide.setRot(0);
-        slide.setSlide(0);
-        sleep(500);
-        slide.setRot(620);
-        otosDrive(-48,20,0,5);
-        slide.turnServoRot(0.75);
-        otosDrive(0,9.25,0,2);
-        slide.setSlide(1700);
-        sleep(1700);
+        sleep(250);
+        slide.setRot(840);
+        otosDrive(-14, -14, 0, 4);
+        stopBot();
+        slide.setSlide(1600);
+        slide.turnServoRot(0);
+        sleep(1000);
         slide.grabAll();
-        sleep(150);
-        slide.ungrabAll();
-        otosDrive(0,-15,0,3);
+        sleep(250);
+//        slide.setRot(600);
+//        sleep(250);
+//        slide.setSlide(0);
+//        slide.setRot(0);
+//        otosDrive(7,14,0,4);
+//        slide.ungrabAll();
+//        otosDrive(-14, -14, 0, 4);
+//        stopBot();
+//        slide.setSlide(1600);
+//        slide.turnServoRot(0);
+//        sleep(1000);
+//        slide.grabAll();
+//        sleep(500);
         slide.setRot(0);
         slide.setSlide(0);
-        otosDrive(30,-9.5,0,2);
-        sleep(1400);
+        sleep(1250);
     }
 
     private void configureOtos() {
@@ -277,7 +276,12 @@ public class auto_odo_legacy extends LinearOpMode {
 
 
     private SparkFunOTOS.Pose2D errorPos(double x, double y, double h){
-        return new SparkFunOTOS.Pose2D(x-myOtos.getPosition().x, y-myOtos.getPosition().y, h-myOtos.getPosition().h);
+        double curH = myOtos.getPosition().h;
+        double errH = h-curH;
+        if(Math.abs(errH)>180){
+            errH = errH - (180*Math.signum(errH));
+        }
+        return new SparkFunOTOS.Pose2D(x-myOtos.getPosition().x, y-myOtos.getPosition().y, errH);
     }
 
     public static double applySymmetricDeadband(double input, double deadbandThreshold) {
@@ -285,6 +289,7 @@ public class auto_odo_legacy extends LinearOpMode {
         if (Math.abs(input) <= deadbandThreshold) {
             return 0.0;
         }
+        //For Symmetry, do the same with a deadband to 1
         else if (1-Math.abs(input)<=deadbandThreshold){
             return (Math.signum(input));
         }
@@ -316,7 +321,8 @@ public class auto_odo_legacy extends LinearOpMode {
         runtime.reset();
         while((opModeIsActive())&&((runtime.milliseconds()<=750*maxTime)&&(Math.abs(errX) >=0.5 || Math.abs(errY) >= 0.5))){
             moveInstant = new vec2d(errX, errY, 0);
-            driveBot(moveInstant.dir, moveInstant.mag);//Calculate error
+            driveBot(moveInstant.dir, moveInstant.mag);
+            //Re-calculate error
             errX=errorPos(targetX, targetY, targetH).x;
             errY=errorPos(targetX, targetY, targetH).y;
             errH=errorPos(targetX, targetY, targetH).h;
@@ -325,14 +331,13 @@ public class auto_odo_legacy extends LinearOpMode {
         }
 
         runtime.reset();
-        while((opModeIsActive())&&((runtime.milliseconds()<=250*maxTime)&&(Math.abs(errH) >=13))){
+        errH=errorPos(targetX, targetY, targetH).h;
+        while((opModeIsActive())&&((runtime.milliseconds()<=250*maxTime)&&(applyDeadband(sigmoidRotatePower(Math.abs(errH)), 0.01) > 0))){
             if(targetH==0){
                 break;
             }
-            moveInstant = new vec2d(errX, errY, 0);
-            rotateBot((errH)/Math.abs(errH));//Calculate error
-            errX=errorPos(targetX, targetY, targetH).x;
-            errY=errorPos(targetX, targetY, targetH).y;
+            rotateBot(errH);
+            //Re-calculate error
             errH=errorPos(targetX, targetY, targetH).h;
             telemetry.addData("H_err", errH);
             telemetry.addData("H_Targ", targetH);
@@ -378,14 +383,16 @@ public class auto_odo_legacy extends LinearOpMode {
         telemetry.update();
     }
     void rotateBot(double r){
-        leftFrontDrive.setPower(r*TURN_CAP);
-        rightBackDrive.setPower(r*TURN_CAP*-1);
-        rightFrontDrive.setPower(r*TURN_CAP*-1);
-        leftBackDrive.setPower(r*TURN_CAP);
+        double power = applySymmetricDeadband(sigmoidRotatePower(Math.abs(r)), 0.01);
+        leftFrontDrive.setPower(power*-1*Math.signum(r));
+        rightBackDrive.setPower(power*Math.signum(r));
+        rightFrontDrive.setPower(power*Math.signum(r));
+        leftBackDrive.setPower(power*-1*Math.signum(r));
+        telemetry.addData("rotPower",power);
         telemetry.addData("X", myOtos.getPosition().x);
         telemetry.addData("Y", myOtos.getPosition().y);
         telemetry.addData("H", myOtos.getPosition().h);
-        telemetry.addData("H_err", 0);
+        telemetry.addData("H_err", r);
         telemetry.addData("LF", leftFrontDrive.getPower());
         telemetry.addData("RF", rightFrontDrive.getPower());
         telemetry.addData("LB", leftBackDrive.getPower());
@@ -400,5 +407,8 @@ public class auto_odo_legacy extends LinearOpMode {
     }
     double sigmoidPower(double distance){
         return ((-1)/(1+Math.pow(Math.E,(A*(distance-B)))))+1;
+    }
+    double sigmoidRotatePower(double deltatheta){
+        return ((-1)/(1+Math.pow(Math.E,(A_ROT*(deltatheta-B_ROT)))))+1;
     }
 }
